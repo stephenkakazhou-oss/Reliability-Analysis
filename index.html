@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>可靠性试验换算工具</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: #0d1117;
+    color: #e6edf3;
+    min-height: 100vh;
+    padding: 32px 16px;
+  }
+
+  .page {
+    max-width: 860px;
+    margin: 0 auto;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+
+  header .badge {
+    display: inline-block;
+    background: #1a3a5c;
+    color: #58a6ff;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 20px;
+    border: 1px solid #2d5a8e;
+    margin-bottom: 14px;
+  }
+
+  header h1 {
+    font-size: 28px;
+    font-weight: 600;
+    color: #f0f6fc;
+    letter-spacing: -0.02em;
+    margin-bottom: 8px;
+  }
+
+  header p {
+    color: #8b949e;
+    font-size: 14px;
+  }
+
+  .formula-bar {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 10px;
+    padding: 18px 24px;
+    margin-bottom: 28px;
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .formula-item {
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 12.5px;
+    color: #8b949e;
+    white-space: nowrap;
+  }
+
+  .formula-item span {
+    color: #79c0ff;
+  }
+
+  .formula-divider {
+    color: #30363d;
+    font-size: 18px;
+  }
+
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+
+  @media (max-width: 620px) {
+    .grid-2 { grid-template-columns: 1fr; }
+  }
+
+  .card {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    padding: 24px;
+  }
+
+  .card.accent-blue { border-top: 3px solid #1f6feb; }
+  .card.accent-green { border-top: 3px solid #238636; }
+  .card.accent-amber { border-top: 3px solid #d29922; }
+
+  .card h2 {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #8b949e;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .card h2 .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .dot-blue { background: #1f6feb; }
+  .dot-green { background: #238636; }
+  .dot-amber { background: #d29922; }
+
+  .field { margin-bottom: 16px; }
+  .field:last-child { margin-bottom: 0; }
+
+  .field label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+
+  .field label .name {
+    font-size: 13px;
+    color: #c9d1d9;
+    font-weight: 500;
+  }
+
+  .field label .symbol {
+    font-family: 'Consolas', monospace;
+    font-size: 12px;
+    color: #58a6ff;
+    background: #1a3a5c;
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+
+  .field input[type="number"] {
+    width: 100%;
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    color: #f0f6fc;
+    font-size: 15px;
+    padding: 10px 14px;
+    transition: border-color 0.15s;
+    outline: none;
+  }
+
+  .field input[type="number"]:focus {
+    border-color: #1f6feb;
+    box-shadow: 0 0 0 3px rgba(31,111,235,0.15);
+  }
+
+  .field input[type="range"] {
+    width: 100%;
+    accent-color: #1f6feb;
+    cursor: pointer;
+    height: 4px;
+    margin-top: 4px;
+  }
+
+  .range-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .range-row input[type="range"] { flex: 1; }
+
+  .range-val {
+    font-family: 'Consolas', monospace;
+    font-size: 14px;
+    color: #58a6ff;
+    min-width: 42px;
+    text-align: right;
+    font-weight: 600;
+  }
+
+  .hint {
+    font-size: 11px;
+    color: #6e7681;
+    margin-top: 4px;
+  }
+
+  .divider {
+    border: none;
+    border-top: 1px solid #21262d;
+    margin: 20px 0;
+  }
+
+  .tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 20px;
+    background: #0d1117;
+    padding: 4px;
+    border-radius: 10px;
+    border: 1px solid #21262d;
+  }
+
+  .tab-btn {
+    flex: 1;
+    padding: 9px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    border: none;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: all 0.15s;
+    background: transparent;
+    color: #8b949e;
+  }
+
+  .tab-btn.active {
+    background: #1f6feb;
+    color: #fff;
+  }
+
+  .tab-btn:hover:not(.active) {
+    background: #161b22;
+    color: #c9d1d9;
+  }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  .result-box {
+    background: #0d1117;
+    border: 1px solid #1f6feb;
+    border-radius: 10px;
+    padding: 20px;
+    margin-top: 4px;
+  }
+
+  .result-main {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .result-label {
+    font-size: 12px;
+    color: #8b949e;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .result-value {
+    font-size: 36px;
+    font-weight: 700;
+    color: #58a6ff;
+    font-family: 'Consolas', monospace;
+    line-height: 1;
+  }
+
+  .result-unit {
+    font-size: 14px;
+    color: #8b949e;
+  }
+
+  .result-sentence {
+    background: #161b22;
+    border-left: 3px solid #238636;
+    border-radius: 4px;
+    padding: 12px 16px;
+    font-size: 14px;
+    color: #c9d1d9;
+    line-height: 1.7;
+  }
+
+  .result-sentence strong {
+    color: #3fb950;
+    font-weight: 600;
+  }
+
+  .n1-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: #161b22;
+    border-radius: 8px;
+    border: 1px solid #21262d;
+    margin-bottom: 16px;
+  }
+
+  .n1-info .n1-label { font-size: 12px; color: #8b949e; }
+  .n1-info .n1-val { font-family: 'Consolas', monospace; font-size: 14px; color: #d29922; font-weight: 600; }
+
+  .calc-btn {
+    width: 100%;
+    padding: 13px;
+    background: #1f6feb;
+    color: #fff;
+    border: none;
+    border-radius: 9px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    margin-top: 8px;
+    letter-spacing: 0.01em;
+  }
+
+  .calc-btn:hover { background: #388bfd; }
+  .calc-btn:active { transform: scale(0.99); }
+
+  .error-msg {
+    background: #1c1c1c;
+    border: 1px solid #da3633;
+    color: #ff7b72;
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 13px;
+    margin-top: 12px;
+    display: none;
+  }
+
+  .section-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #6e7681;
+    margin-bottom: 14px;
+    font-weight: 600;
+  }
+
+  footer {
+    text-align: center;
+    margin-top: 48px;
+    color: #6e7681;
+    font-size: 12px;
+    line-height: 1.8;
+  }
+
+  footer a { color: #58a6ff; text-decoration: none; }
+
+  .section-heading {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #21262d;
+  }
+
+  .section-num {
+    font-family: 'Consolas', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    color: #fff;
+    background: #1f6feb;
+    padding: 3px 8px;
+    border-radius: 5px;
+    letter-spacing: 0.05em;
+    flex-shrink: 0;
+  }
+
+  .section-title-main {
+    font-size: 17px;
+    font-weight: 600;
+    color: #f0f6fc;
+    letter-spacing: -0.01em;
+  }
+
+  .section-desc {
+    font-size: 12px;
+    color: #6e7681;
+    margin-left: auto;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 600px) {
+    .section-desc { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header>
+    <div class="badge">Weibull Reliability Analysis</div>
+    <h1>可靠性试验换算工具</h1>
+    <p>基于威布尔分布的无失效试验样本量与目标寿命计算</p>
+  </header>
+
+  <div class="section-heading">
+    <span class="section-num">01</span>
+    <span class="section-title-main">非混合试验方案计算</span>
+    <span class="section-desc">已知可靠度与置信度，计算所需样本量或目标寿命</span>
+  </div>
+
+  <div class="formula-bar">
+    <div class="formula-item">N₁ = <span>ln(1−C) / ln(R)</span></div>
+    <div class="formula-divider">|</div>
+    <div class="formula-item">T = <span>exp[(ln(N₁)−ln(Nx)) / β]</span></div>
+    <div class="formula-divider">|</div>
+    <div class="formula-item">Nx = <span>exp[ln(N₁) − β·ln(T)]</span></div>
+  </div>
+
+  <div class="grid-2">
+
+    <!-- 左侧：公共输入 -->
+    <div class="card accent-blue">
+      <h2><span class="dot dot-blue"></span>公共参数输入</h2>
+
+      <div class="field">
+        <label>
+          <span class="name">可靠度 R</span>
+          <span class="symbol">R</span>
+        </label>
+        <div class="range-row">
+          <input type="range" id="r-range" min="0.500" max="0.999" step="0.001" value="0.95" oninput="syncRange('r')">
+          <span class="range-val" id="r-display">0.950</span>
+        </div>
+        <input type="number" id="r-input" value="0.950" min="0.001" max="0.999" step="0.001" oninput="syncInput('r')" style="margin-top:8px;">
+        <div class="hint">例：0.95 = 95% 可靠度</div>
+      </div>
+
+      <div class="field">
+        <label>
+          <span class="name">置信度 C</span>
+          <span class="symbol">C</span>
+        </label>
+        <div class="range-row">
+          <input type="range" id="c-range" min="0.50" max="0.99" step="0.01" value="0.90" oninput="syncRange('c')">
+          <span class="range-val" id="c-display">0.90</span>
+        </div>
+        <input type="number" id="c-input" value="0.90" min="0.01" max="0.99" step="0.01" oninput="syncInput('c')" style="margin-top:8px;">
+        <div class="hint">例：0.90 = 90% 置信水平</div>
+      </div>
+
+      <div class="field">
+        <label>
+          <span class="name">威布尔斜率 β</span>
+          <span class="symbol">β</span>
+        </label>
+        <div class="range-row">
+          <input type="range" id="b-range" min="0.5" max="10" step="0.1" value="2.5" oninput="syncRange('b')">
+          <span class="range-val" id="b-display">2.5</span>
+        </div>
+        <input type="number" id="b-input" value="2.5" min="0.1" max="20" step="0.1" oninput="syncInput('b')" style="margin-top:8px;">
+        <div class="hint">β&lt;1: 早期失效 | β=1: 随机失效 | β&gt;1: 磨损失效</div>
+      </div>
+
+      <hr class="divider">
+      <div class="n1-info">
+        <div class="n1-label">基准样本量 N₁ =</div>
+        <div class="n1-val" id="n1-display">—</div>
+        <div class="n1-label" style="margin-left:4px;">（试验至1个寿命）</div>
+      </div>
+
+      <button class="calc-btn" onclick="calculate()" style="display:none;">计算</button>
+    </div>
+
+    <!-- 右侧：计算选项 -->
+    <div class="card accent-green">
+      <h2><span class="dot dot-green"></span>计算模式</h2>
+
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('mode-t')">求目标寿命 T</button>
+        <button class="tab-btn" onclick="switchTab('mode-nx')">求样本量 Nx</button>
+      </div>
+
+      <!-- 模式1：输入样本量，求寿命 -->
+      <div class="tab-panel active" id="mode-t">
+        <div class="section-title">已知样本量，求需验证的寿命倍数</div>
+        <div class="field">
+          <label>
+            <span class="name">实际试验样本量 Nx</span>
+            <span class="symbol">Nx</span>
+          </label>
+          <input type="number" id="nx-input" value="3" min="1" step="1" onkeypress="return event.charCode>=48&&event.charCode<=57">
+          <div class="hint">实际参与试验的零件数量（整数件）</div>
+        </div>
+
+        <div id="result-t" class="result-box" style="display:none;">
+          <div class="result-main">
+            <div>
+              <div class="result-label">目标寿命 T</div>
+              <div>
+                <span class="result-value" id="t-value">—</span>
+                <span class="result-unit"> 倍寿命</span>
+              </div>
+            </div>
+          </div>
+          <div class="result-sentence" id="t-sentence"></div>
+        </div>
+        <div class="error-msg" id="error-t"></div>
+      </div>
+
+      <!-- 模式2：输入目标寿命，求样本量 -->
+      <div class="tab-panel" id="mode-nx">
+        <div class="section-title">已知目标寿命，求所需样本量</div>
+        <div class="field">
+          <label>
+            <span class="name">目标寿命倍数 T</span>
+            <span class="symbol">T</span>
+          </label>
+          <input type="number" id="t-input" value="4" min="0.01" step="0.1">
+          <div class="hint">希望验证的寿命倍数（相对于1个设计寿命）</div>
+        </div>
+
+        <div id="result-nx" class="result-box" style="display:none;">
+          <div class="result-main">
+            <div>
+              <div class="result-label">所需样本量 Nx</div>
+              <div>
+                <span class="result-value" id="nx-value">—</span>
+                <span class="result-unit"> 件</span>
+              </div>
+            </div>
+          </div>
+          <div class="result-sentence" id="nx-sentence"></div>
+        </div>
+        <div class="error-msg" id="error-nx"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 说明卡片 -->
+  <div class="card accent-amber" style="margin-top:0;">
+    <h2><span class="dot dot-amber"></span>公式说明 & 参数定义</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;font-size:13px;color:#8b949e;line-height:1.8;">
+      <div>
+        <div style="color:#d29922;font-weight:600;margin-bottom:4px;">R — 可靠度</div>
+        产品在规定条件下完成规定功能的概率。
+        通常取 0.90、0.95、0.99 等。
+      </div>
+      <div>
+        <div style="color:#d29922;font-weight:600;margin-bottom:4px;">C — 置信度</div>
+        对可靠性估计结论的把握程度。
+        工程上常取 0.50（中值）或 0.90。
+      </div>
+      <div>
+        <div style="color:#d29922;font-weight:600;margin-bottom:4px;">β — 威布尔斜率</div>
+        反映失效模式：β=1随机失效；β&gt;1 磨损；β&lt;1 早期故障。
+      </div>
+      <div>
+        <div style="color:#d29922;font-weight:600;margin-bottom:4px;">N₁ — 基准样本量</div>
+        试验至 1 个设计寿命、无失效、满足 R 和 C 要求所需的最少样本数。
+      </div>
+      <div>
+        <div style="color:#d29922;font-weight:600;margin-bottom:4px;">T — 目标寿命倍数</div>
+        相对于设计寿命的倍数。T=1.5 表示验证1.5倍设计寿命无失效。
+      </div>
+      <div>
+        <div style="color:#d29922;font-weight:600;margin-bottom:4px;">Nx — 实际样本量</div>
+        试验到 T 倍寿命无失效时所需的实际零件数（通常小于 N₁）。
+      </div>
+    </div>
+  </div>
+
+  <!-- 混合试验方案可靠度计算 -->
+  <div class="section-heading" style="margin-top:48px;">
+    <span class="section-num" style="background:#8957e5;">02</span>
+    <span class="section-title-main">混合试验方案</span>
+    <span class="section-desc">多组不同样本量与寿命组合，无失效条件下反推可靠度下限</span>
+  </div>
+
+  <div class="card" style="border-top:3px solid #8957e5; margin-top:0;">
+    <div style="font-size:12px;color:#6e7681;margin-bottom:20px;">公式：R = exp( ln(1−C) / Σ(nᵢ × Tᵢ<sup>β</sup>) )</div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+      <div class="field">
+        <label><span class="name">威布尔斜率 β</span><span class="symbol" style="background:#2d1f47;color:#c084fc;">β</span></label>
+        <div class="range-row">
+          <input type="range" id="rb-range" min="0.5" max="10" step="0.1" value="2.5" oninput="syncRb()" style="accent-color:#8957e5;">
+          <span class="range-val" id="rb-display" style="color:#c084fc;">2.5</span>
+        </div>
+        <input type="number" id="rb-input" value="2.5" min="0.1" max="20" step="0.1" oninput="syncRbInput()" style="margin-top:8px;">
+      </div>
+      <div class="field">
+        <label><span class="name">置信度 C</span><span class="symbol" style="background:#2d1f47;color:#c084fc;">C</span></label>
+        <div class="range-row">
+          <input type="range" id="rc-range" min="0.50" max="0.99" step="0.01" value="0.90" oninput="syncRc()" style="accent-color:#8957e5;">
+          <span class="range-val" id="rc-display" style="color:#c084fc;">0.90</span>
+        </div>
+        <input type="number" id="rc-input" value="0.90" min="0.01" max="0.99" step="0.01" oninput="syncRcInput()" style="margin-top:8px;">
+      </div>
+    </div>
+
+    <div style="margin-bottom:12px;">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:#6e7681;font-weight:600;margin-bottom:10px;">试验组配置（每行为一组）</div>
+      <div style="display:grid;grid-template-columns:32px 1fr 1fr 1.2fr 36px;gap:8px;align-items:center;margin-bottom:6px;">
+        <div></div>
+        <div style="font-size:11px;color:#6e7681;text-align:center;">样本量 n（件）</div>
+        <div style="font-size:11px;color:#6e7681;text-align:center;">试验寿命倍数 T</div>
+        <div style="font-size:11px;color:#6e7681;text-align:center;">备注</div>
+        <div></div>
+      </div>
+      <div id="group-list"></div>
+    </div>
+
+    <button onclick="addGroup()" style="background:transparent;border:1px dashed #30363d;color:#8b949e;border-radius:8px;padding:9px;width:100%;font-size:13px;cursor:pointer;margin-bottom:16px;" onmouseover="this.style.borderColor='#8957e5';this.style.color='#c084fc';" onmouseout="this.style.borderColor='#30363d';this.style.color='#8b949e';">
+      + 添加试验组
+    </button>
+
+
+    <div id="r-result" style="display:none;margin-top:16px;">
+      <div style="background:#0d1117;border:1px solid #8957e5;border-radius:10px;padding:20px;">
+        <div style="font-size:12px;color:#8b949e;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">可靠度下限 R</div>
+        <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:14px;">
+          <span id="r-value" style="font-size:40px;font-weight:700;color:#c084fc;font-family:'Consolas',monospace;line-height:1;">—</span>
+          <span style="font-size:14px;color:#8b949e;">（<span id="r-pct">—</span>%）</span>
+        </div>
+        <div id="r-detail" style="background:#161b22;border-left:3px solid #8957e5;border-radius:4px;padding:12px 16px;font-size:13px;color:#c9d1d9;line-height:1.8;"></div>
+        <div id="r-breakdown" style="margin-top:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;"></div>
+      </div>
+    </div>
+    <div id="r-error" style="display:none;background:#1c1c1c;border:1px solid #da3633;color:#ff7b72;border-radius:8px;padding:12px 16px;font-size:13px;margin-top:12px;"></div>
+  </div>
+
+  <footer>
+    基于威布尔无失效试验换算公式 &nbsp;|&nbsp; Weibull Zero-Failure Reliability Demonstration<br>
+    公式来源：N₁ = ln(1−C)/ln(R)，T = exp[(ln(N₁)−ln(Nx))/β]，Nx = exp[ln(N₁)−β·ln(T)]
+    &nbsp;|&nbsp; R_lower = exp(ln(1−C)/Σ(nᵢ·Tᵢ^β))<br><br>
+    <span style="color:#c9d1d9;font-weight:500;letter-spacing:0.04em;">有问题请联系 Yuyang Zhou</span>
+  </footer>
+
+</div>
+
+<script>
+  let currentTab = 'mode-t';
+
+  function syncRange(key) {
+    const val = parseFloat(document.getElementById(key + '-range').value);
+    document.getElementById(key + '-input').value = val;
+    const dec = key === 'b' ? 1 : key === 'c' ? 2 : 3;
+    document.getElementById(key + '-display').textContent = val.toFixed(dec);
+    autoCalc();
+  }
+
+  function syncInput(key) {
+    let val = parseFloat(document.getElementById(key + '-input').value);
+    if (!isNaN(val)) {
+      const dec = key === 'b' ? 1 : key === 'c' ? 2 : 3;
+      const factor = Math.pow(10, dec);
+      val = Math.round(val * factor) / factor;
+      document.getElementById(key + '-input').value = val.toFixed(dec);
+      document.getElementById(key + '-range').value = val;
+      document.getElementById(key + '-display').textContent = val.toFixed(dec);
+    }
+    autoCalc();
+  }
+
+  function switchTab(id) {
+    currentTab = id;
+    document.querySelectorAll('.tab-btn').forEach((b, i) => {
+      b.classList.toggle('active', (i === 0 && id === 'mode-t') || (i === 1 && id === 'mode-nx'));
+    });
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    calculate();
+  }
+
+  function getInputs() {
+    const R = parseFloat(document.getElementById('r-input').value);
+    const C = parseFloat(document.getElementById('c-input').value);
+    const B = parseFloat(document.getElementById('b-input').value);
+    return { R, C, B };
+  }
+
+  function calcN1(R, C) {
+    return Math.log(1 - C) / Math.log(R);
+  }
+
+  function showError(id, msg) {
+    const el = document.getElementById('error-' + id);
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+
+  function hideError(id) {
+    document.getElementById('error-' + id).style.display = 'none';
+  }
+
+  function calculate() {
+    const { R, C, B } = getInputs();
+
+    if (isNaN(R) || R <= 0 || R >= 1) { document.getElementById('n1-display').textContent = '—'; return; }
+    if (isNaN(C) || C <= 0 || C >= 1) { document.getElementById('n1-display').textContent = '—'; return; }
+    if (isNaN(B) || B <= 0) { document.getElementById('n1-display').textContent = '—'; return; }
+
+    const N1 = calcN1(R, C);
+    document.getElementById('n1-display').textContent = N1.toFixed(4) + ' → ' + Math.ceil(N1) + ' 件';
+
+    if (currentTab === 'mode-t') {
+      const Nx = parseFloat(document.getElementById('nx-input').value);
+      hideError('t');
+      document.getElementById('result-t').style.display = 'none';
+
+      if (isNaN(Nx) || Nx <= 0) { showError('t', '请输入有效的样本量 Nx（正整数）'); return; }
+      if (Nx > N1) {
+        const T = 1.0;
+        document.getElementById('t-value').textContent = T.toFixed(3);
+        document.getElementById('t-sentence').innerHTML =
+          `样本量 <strong>${Math.round(Nx)}</strong> 已超过基准样本量 N₁ = <strong>${Math.ceil(N1)}</strong>，<br>只需试验至 <strong>1 个设计寿命</strong>即可满足要求。`;
+        document.getElementById('result-t').style.display = 'block';
+        return;
+      }
+
+      const T = Math.exp((Math.log(N1) - Math.log(Nx)) / B);
+      document.getElementById('t-value').textContent = T.toFixed(3);
+      document.getElementById('t-sentence').innerHTML =
+        `为了以 <strong>${(C * 100).toFixed(0)}%</strong> 的置信度验证 <strong>${(R * 100).toFixed(0)}%</strong> 可靠度，<br>` +
+        `使用 <strong>${Math.round(Nx)}</strong> 件样品进行试验，需无失效地通过 <strong>${T.toFixed(3)}</strong> 倍设计寿命。`;
+      document.getElementById('result-t').style.display = 'block';
+
+    } else {
+      const T = parseFloat(document.getElementById('t-input').value);
+      hideError('nx');
+      document.getElementById('result-nx').style.display = 'none';
+
+      if (isNaN(T) || T <= 0) { showError('nx', '请输入有效的目标寿命倍数 T（正数）'); return; }
+
+      const NxRaw = Math.exp(Math.log(N1) - B * Math.log(T));
+      const Nx = Math.ceil(NxRaw);
+      document.getElementById('nx-value').textContent = Nx;
+      document.getElementById('nx-sentence').innerHTML =
+        `为了以 <strong>${(C * 100).toFixed(0)}%</strong> 的置信度验证 <strong>${(R * 100).toFixed(0)}%</strong> 可靠度，<br>` +
+        `需要 <strong>${Nx}</strong> 件样品无失效地通过 <strong>${T}</strong> 倍设计寿命的试验。<br>` +
+        `（精确值：${NxRaw.toFixed(4)}，向上取整为 ${Nx} 件）`;
+      document.getElementById('result-nx').style.display = 'block';
+    }
+  }
+
+  function autoCalc() { calculate(); }
+
+  document.getElementById('nx-input').addEventListener('input', function() {
+    const v = parseFloat(this.value);
+    if (!isNaN(v) && v !== Math.floor(v)) this.value = Math.max(1, Math.round(v));
+    calculate();
+  });
+  document.getElementById('t-input').addEventListener('input', calculate);
+
+  calculate();
+
+  // ── Mixed test plan reliability calculator ──────────────────────
+  let groupCount = 0;
+
+  function syncRb() {
+    const v = parseFloat(document.getElementById('rb-range').value);
+    document.getElementById('rb-input').value = v.toFixed(1);
+    document.getElementById('rb-display').textContent = v.toFixed(1);
+    calcReliability();
+  }
+  function syncRbInput() {
+    const v = parseFloat(document.getElementById('rb-input').value);
+    if (!isNaN(v)) { document.getElementById('rb-range').value = v; document.getElementById('rb-display').textContent = v.toFixed(1); }
+    calcReliability();
+  }
+  function syncRc() {
+    const v = parseFloat(document.getElementById('rc-range').value);
+    document.getElementById('rc-input').value = v.toFixed(2);
+    document.getElementById('rc-display').textContent = v.toFixed(2);
+    calcReliability();
+  }
+  function syncRcInput() {
+    let v = parseFloat(document.getElementById('rc-input').value);
+    if (!isNaN(v)) { v = Math.round(v*100)/100; document.getElementById('rc-range').value = v; document.getElementById('rc-display').textContent = v.toFixed(2); document.getElementById('rc-input').value = v.toFixed(2); }
+    calcReliability();
+  }
+
+  function addGroup(n=3, T=1) {
+    groupCount++;
+    const id = groupCount;
+    const div = document.createElement('div');
+    div.id = 'group-' + id;
+    div.style.cssText = 'display:grid;grid-template-columns:32px 1fr 1fr 1.2fr 36px;gap:8px;align-items:center;margin-bottom:8px;';
+    div.innerHTML = `
+      <div style="font-size:12px;color:#6e7681;text-align:center;font-family:'Consolas',monospace;">${id}</div>
+      <input type="number" class="g-n" value="${n}" min="1" step="1" placeholder="样本量"
+        style="background:#0d1117;border:1px solid #30363d;border-radius:8px;color:#f0f6fc;font-size:14px;padding:9px 12px;outline:none;width:100%;"
+        onkeypress="return event.charCode>=48&&event.charCode<=57"
+        oninput="const v=parseFloat(this.value);if(!isNaN(v)&&v!==Math.floor(v))this.value=Math.max(1,Math.round(v));calcReliability();">
+      <input type="number" class="g-t" value="${T}" min="0.01" step="0.1" placeholder="寿命倍数"
+        style="background:#0d1117;border:1px solid #30363d;border-radius:8px;color:#f0f6fc;font-size:14px;padding:9px 12px;outline:none;width:100%;"
+        oninput="calcReliability();">
+      <input type="text" class="g-r" placeholder="选填"
+        style="background:#0d1117;border:1px solid #30363d;border-radius:8px;color:#8b949e;font-size:13px;padding:9px 12px;outline:none;width:100%;">
+      <button onclick="removeGroup(${id})" style="background:transparent;border:1px solid #30363d;color:#6e7681;border-radius:6px;width:32px;height:36px;cursor:pointer;font-size:16px;line-height:1;" onmouseover="this.style.borderColor='#da3633';this.style.color='#ff7b72';" onmouseout="this.style.borderColor='#30363d';this.style.color='#6e7681';">×</button>`;
+    document.getElementById('group-list').appendChild(div);
+    calcReliability();
+  }
+
+  function removeGroup(id) {
+    const el = document.getElementById('group-' + id);
+    if (el) el.remove();
+    calcReliability();
+  }
+
+  function calcReliability() {
+    document.getElementById('r-result').style.display = 'none';
+    document.getElementById('r-error').style.display = 'none';
+
+    const beta = parseFloat(document.getElementById('rb-input').value);
+    const C = parseFloat(document.getElementById('rc-input').value);
+
+    if (isNaN(beta) || beta <= 0) { showRErr('请输入有效的威布尔斜率 β'); return; }
+    if (isNaN(C) || C <= 0 || C >= 1) { showRErr('请输入有效的置信度 C（0~1之间）'); return; }
+
+    const rows = document.querySelectorAll('#group-list > div');
+    if (rows.length === 0) { showRErr('请至少添加一个试验组'); return; }
+
+    let N_eq = 0;
+    let valid = true;
+    const groupData = [];
+
+    rows.forEach(row => {
+      const n = parseInt(row.querySelector('.g-n').value);
+      const T = parseFloat(row.querySelector('.g-t').value);
+      const remark = (row.querySelector('.g-r').value || '').trim();
+      if (isNaN(n) || n < 1 || isNaN(T) || T <= 0) { valid = false; return; }
+      const contrib = n * Math.pow(T, beta);
+      N_eq += contrib;
+      groupData.push({ n, T, contrib, remark });
+    });
+
+    if (!valid) { showRErr('存在无效输入值，请检查各组的样本量和寿命倍数'); return; }
+    if (N_eq <= 0) { showRErr('等效样本量计算异常，请检查输入'); return; }
+
+    const R = Math.exp(Math.log(1 - C) / N_eq);
+
+    document.getElementById('r-value').textContent = R.toFixed(4);
+    document.getElementById('r-pct').textContent = (R * 100).toFixed(2);
+
+    const groupDesc = groupData.map(g => `${g.n}件×${g.T}倍寿命`).join(' + ');
+    document.getElementById('r-detail').innerHTML =
+      `试验方案：<strong style="color:#c084fc;">${groupDesc}</strong><br>` +
+      `等效基准样本量 Σ(nᵢ·Tᵢ<sup>β</sup>) = <strong style="color:#c084fc;">${N_eq.toFixed(4)}</strong><br>` +
+      `置信度 <strong style="color:#c084fc;">${(C*100).toFixed(0)}%</strong>，威布尔斜率 β = <strong style="color:#c084fc;">${beta}</strong><br>` +
+      `无失效条件下可靠度下限：<strong style="color:#c084fc;font-size:15px;">R = ${R.toFixed(4)}（${(R*100).toFixed(2)}%）</strong>`;
+
+    document.getElementById('r-breakdown').innerHTML = groupData.map(g =>
+      `<div style="background:#161b22;border:1px solid #2d1f47;border-radius:8px;padding:10px 12px;">
+        <div style="font-size:11px;color:#8b949e;margin-bottom:2px;">${g.n}件 × ${g.T}倍寿命${g.remark ? ' · <span style="color:#6e7681;">'+g.remark+'</span>' : ''}</div>
+        <div style="font-size:14px;color:#c084fc;font-family:'Consolas',monospace;font-weight:600;">${g.contrib.toFixed(3)}</div>
+        <div style="font-size:11px;color:#6e7681;">占比 ${(g.contrib/N_eq*100).toFixed(1)}%</div>
+      </div>`
+    ).join('');
+
+    document.getElementById('r-result').style.display = 'block';
+  }
+
+  function showRErr(msg) {
+    const el = document.getElementById('r-error');
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+
+  addGroup(3, 2);
+  addGroup(3, 3);
+</script>
+</body>
+</html>
